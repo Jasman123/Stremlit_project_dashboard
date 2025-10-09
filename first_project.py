@@ -3,8 +3,7 @@ import pandas as pd
 import plotly.express as px
 
 # Load data
-df = pd.read_csv(r"C:\Users\OFFICE-COB\Documents\COB Engineer\python Project\HourlyLineRecord - DataBase Try.csv")
-
+df = pd.read_csv("HourlyLineRecord - DataBase Try.csv")
 
 # Streamlit app layout
 st.title(f"📊 Hourly Line Record Dashboard {df['Date'].iloc[0]}")
@@ -30,3 +29,4 @@ st.dataframe(pivot_1)
 st.subheader("Boxplot of OK Values")
 fig = px.box(df, y='OK', title='Distribution of OK Values')
 st.plotly_chart(fig)
+
