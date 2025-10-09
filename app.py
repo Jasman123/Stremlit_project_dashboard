@@ -1,8 +1,6 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import gspread
-from oauth2client.service_account import ServiceAccountCredentials
 from streamlit_autorefresh import st_autorefresh
 
 # ------------------------------
@@ -16,28 +14,23 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-
 st.title("Real-time Recording Data COB Line")
 
 # ------------------------------
-# Google Sheets authentication
-scope = ["https://spreadsheets.google.com/feeds",
-         "https://www.googleapis.com/auth/spreadsheets",
-         "https://www.googleapis.com/auth/drive.file",
-         "https://www.googleapis.com/auth/drive"]
+# Google Sheets CSV URL (must be CSV export)
+SHEET_ID = "1oOJu04mdSgeGALFv9orv9LnvTf_HRBOlnLJVv4I07xc"
+GID = "190517020"
+CSV_URL = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv&gid={GID}"
 
-# Replace with the path to your downloaded JSON key
-creds = ServiceAccountCredentials.from_json_keyfile_name(".venv/nth-canto-468405-c8-552f3d3718ae.json", scope)
-client = gspread.authorize(creds)
+@st.cache_data(ttl=60)  # cache for 60 seconds
+def load_data():
+    df = pd.read_csv(CSV_URL)
+    return df
 
+df = load_data()
 
-# Replace with your Google Sheet name
-sheet = client.open("HourlyLineRecord").worksheet("DataBase Try")
-
-# Load data into pandas DataFrame
-data = sheet.get_all_records()
-df = pd.DataFrame(data)
-
+# ------------------------------
+# Filter by TYPE
 categories = list(df['TYPE'].unique())
 categories.append("All")
 selected_category = st.selectbox("Select Category", options=categories)
@@ -50,26 +43,26 @@ else:
 # ------------------------------
 # Create pivot table
 pivot_1 = filtered_df.pivot_table(
-    index='Time',        # rows
-    columns='Station',   # columns
-    values='OK',         # values to aggregate
-    aggfunc='sum',       # sum OK values
-    fill_value=0         # fill missing values with 0
+    index='Time',
+    columns='Station',
+    values='OK',
+    aggfunc='sum',
+    fill_value=0
 )
 
-# Add row-wise total: Total Production per station
+# Row-wise total
 pivot_1['Total Production/Station'] = pivot_1.sum(axis=1)
 
-# Add column-wise total: Total Product station per day
+# Column-wise total
 pivot_1.loc['Total Product Station/Day'] = pivot_1.sum(numeric_only=True)
+
 # ------------------------------
 # Display DataFrame
 st.subheader("Station Record Preview")
 st.dataframe(pivot_1)
 
 # ------------------------------
-# Plotly chart
-# Replace 'Date' and 'Value' with your actual column names
+# Plotly bar chart
 st.subheader("Production Station Pcs")
 fig = px.bar(
     df,
@@ -81,18 +74,20 @@ fig = px.bar(
 fig.update_traces(textposition="outside")
 st.plotly_chart(fig)
 
+# ------------------------------
+# Top NG Line
 st.subheader("Top NG Line")
 group_1 = df.groupby('Station', as_index=False)['NG'].sum()
 top5_NG = group_1.nlargest(5, 'NG')
-fig = px.scatter(
+
+fig2 = px.scatter(
     top5_NG,
     x="Station",
     y="NG",
     color="Station",
-    size="NG",  # optional: size bubbles by NG
-    text="NG",  # show NG values on points
+    size="NG",
+    text="NG",
     title="Top 5 NG by Station"
 )
-
-fig.update_traces(textposition="top center")
-st.plotly_chart(fig)
+fig2.update_traces(textposition="top center")
+st.plotly_chart(fig2)
