@@ -3,16 +3,18 @@ import pandas as pd
 import plotly.express as px
 from streamlit_autorefresh import st_autorefresh
 
-# ------------------------------
-# Auto-refresh every 30 seconds
-st_autorefresh(interval=30000, limit=None, key="refresh")
-
 st.set_page_config(
     page_title="Real-time Dashboard",
     page_icon="📊",
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
+
+# ------------------------------
+# Auto-refresh every 30 seconds
+st_autorefresh(interval=30000, limit=None, key="refresh")
+
 
 st.title("Real-time Recording Data COB Line")
 
@@ -91,3 +93,4 @@ fig2 = px.scatter(
 )
 fig2.update_traces(textposition="top center")
 st.plotly_chart(fig2)
+
