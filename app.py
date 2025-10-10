@@ -3,17 +3,46 @@ import pandas as pd
 import plotly.express as px
 from streamlit_autorefresh import st_autorefresh
 
-def bar_plot (df, x_axis, y_axis, color, title):
+
+CUSTOM_ORDER = [
+    "Incoming Check",
+    "Module Dispensing",
+    "UV Curing dispense",
+    "IC Bonding",
+    "Pd/VC Bonding",
+    "Check Bonding result",
+    "OVEN",
+    "Plasma Cleaning",
+    "Wire Bonding",
+    "Wire Checking",
+    "Lens Bonding",
+    "Lens CCD  Position Check",
+    "U Lens",
+    "Bake/Oven",
+    "Upload Program",
+    "Diving Board",
+    "Labeling",
+    "BERT Test",
+    "Dispensing Reverse",
+    "Check Connector",
+    "Packing"
+]
+
+def bar_plot (df, x_axis, y_axis, color, title, CUSTOM_ORDER=None):
+    if CUSTOM_ORDER and color in df.columns:
+        df[color] = pd.Categorical(df[color], categories=CUSTOM_ORDER, ordered=True)
+        df = df.sort_values(by=color)
+
     fig = px.bar(
-    df,
-    x=x_axis,
-    y=y_axis,
-    color=color,
-    barmode="group",
-    text_auto=True,  
-    title= title,
-    custom_data=[df[color]] 
-)
+        df,
+        x=x_axis,
+        y=y_axis,
+        color=color,
+        barmode="group",
+        text_auto=True,
+        title=title,
+        custom_data=[df[color]],
+    )
     
     fig.update_traces(
     hovertemplate=(
@@ -196,8 +225,9 @@ pivot_1 = filtered_df.pivot_table(
     columns='Station',
     values='OK',
     aggfunc='sum',
-    fill_value=0
+    fill_value=0, 
 )
+pivot_1 = pivot_1[[col for col in CUSTOM_ORDER if col in pivot_1.columns]]
 pivot_1['Total per Time'] = pivot_1.sum(axis=1)
 pivot_1.loc['Grand Total'] = pivot_1.sum(numeric_only=True)
 pivot_1 = pivot_1.applymap(lambda x: f"{x:,.0f}" if isinstance(x, (int, float)) else x)
@@ -216,7 +246,7 @@ st.dataframe(
 # ------------------------------
 # Plotly bar chart
 st.subheader("Production Station Pcs")
-st.plotly_chart(bar_plot(filtered_df,"DateTime","OK","Station","Ouput Production Daily"))
+st.plotly_chart(bar_plot(filtered_df,"DateTime","OK","Station","Output Production Daily",  CUSTOM_ORDER))
 
 # ------------------------------
 # Top NG Line
@@ -226,4 +256,3 @@ top5_NG = group_1.nlargest(5, 'NG')
 
 st.plotly_chart(scatter_plot(top5_NG, "Station", "NG","Station","Top 5 NG by Station")
 , use_container_width=True)
-
