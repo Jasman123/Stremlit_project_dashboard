@@ -61,9 +61,6 @@ def scatter_plot(df, x_axis, y_axis, color, title):
 
 )
     return fig
-# ------------------------------
-# Auto-refresh every 30 seconds
-st_autorefresh(interval=30000, limit=None, key="refresh")
 
 st.set_page_config(
     page_title="Real-time Dashboard",
@@ -72,6 +69,10 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+
+# ------------------------------
+# Auto-refresh every 30 seconds
+st_autorefresh(interval=30000, limit=None, key="refresh")
 
 # ------------------------------
 # Google Sheets CSV URL (must be CSV export)
@@ -225,3 +226,4 @@ top5_NG = group_1.nlargest(5, 'NG')
 
 st.plotly_chart(scatter_plot(top5_NG, "Station", "NG","Station","Top 5 NG by Station")
 , use_container_width=True)
+
