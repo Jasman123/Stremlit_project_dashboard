@@ -3,18 +3,16 @@ import pandas as pd
 import plotly.express as px
 from streamlit_autorefresh import st_autorefresh
 
+# ------------------------------
+# Auto-refresh every 30 seconds
+st_autorefresh(interval=30000, limit=None, key="refresh")
+
 st.set_page_config(
     page_title="Real-time Dashboard",
     page_icon="📊",
     layout="wide",
     initial_sidebar_state="expanded"
 )
-
-
-# ------------------------------
-# Auto-refresh every 30 seconds
-st_autorefresh(interval=30000, limit=None, key="refresh")
-
 
 st.title("Real-time Recording Data COB Line")
 
@@ -53,15 +51,24 @@ pivot_1 = filtered_df.pivot_table(
 )
 
 # Row-wise total
-pivot_1['Total Production/Station'] = pivot_1.sum(axis=1)
+pivot_1['Total per Time'] = pivot_1.sum(axis=1)
 
 # Column-wise total
-pivot_1.loc['Total Product Station/Day'] = pivot_1.sum(numeric_only=True)
+pivot_1.loc['Grand Total'] = pivot_1.sum(numeric_only=True)
+
+# Format numbers with comma separators
+pivot_1 = pivot_1.applymap(lambda x: f"{x:,.0f}" if isinstance(x, (int, float)) else x)
+
 
 # ------------------------------
 # Display DataFrame
-st.subheader("Station Record Preview")
-st.dataframe(pivot_1)
+st.subheader("📋 Station Record Summary")
+st.dataframe(
+    pivot_1,
+    use_container_width=True,
+    hide_index=False
+)
+
 
 # ------------------------------
 # Plotly bar chart
@@ -71,14 +78,22 @@ fig = px.bar(
     x="Time",
     y="OK",
     color="Station",
-    barmode="group"
+    barmode="group",
+    text_auto=True,  
+    title="Production Output per Station Over Time",
 )
-fig.update_traces(textposition="outside")
+
+fig.update_traces(
+    hovertemplate="<b>Station:</b> %{color}<br><b>Time:</b> %{x}<br><b>OK:</b> %{y}<extra></extra>",
+    marker_line_width=1.2,
+    marker_line_color="white",
+)
+
 st.plotly_chart(fig)
 
 # ------------------------------
 # Top NG Line
-st.subheader("Top NG Line")
+st.subheader("🚨 Top 5 NG Line")
 group_1 = df.groupby('Station', as_index=False)['NG'].sum()
 top5_NG = group_1.nlargest(5, 'NG')
 
@@ -89,8 +104,17 @@ fig2 = px.scatter(
     color="Station",
     size="NG",
     text="NG",
-    title="Top 5 NG by Station"
+    title="Top 5 NG by Station",
 )
-fig2.update_traces(textposition="top center")
-st.plotly_chart(fig2)
 
+fig2.update_traces(
+    textposition="top center",
+    textfont=dict(size=14, color="#333", family="Arial Black"),
+    marker=dict(
+        line=dict(width=2, color="white"),
+        opacity=0.9
+    ),
+    hovertemplate="<b>Station:</b> %{x}<br><b>NG Count:</b> %{y}<extra></extra>",
+)
+
+st.plotly_chart(fig2, use_container_width=True)
