@@ -53,7 +53,12 @@ def bar_plot (df, x_axis, y_axis, color, title, CUSTOM_ORDER=None):
         ),
     marker_line_width=1.2,
     marker_line_color="white",
-)
+    )
+
+    min_date = df[x_axis].min()
+    max_date = df[x_axis].max()
+
+
     fig.update_layout(
         legend=dict(
             title="Station",
@@ -98,6 +103,24 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+def make_card(title, value, subtitle, color="#27AE60"):
+    st.markdown(f"""
+    <div style="
+        background-color: #ffffff;
+        border-left: 8px solid {color};
+        border-radius: 10px;
+        padding: 15px;
+        margin: 5px;
+        box-shadow: 2px 2px 10px rgba(0,0,0,0.1);
+        text-align: center;
+    ">
+        <h4 style="color:#2C3E50;">{title}</h4>
+        <h2 style="color:{color}; margin:0;">{value}</h2>
+        <p style="color:gray;">{subtitle}</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+
 
 # ------------------------------
 # Auto-refresh every 30 seconds
@@ -141,7 +164,7 @@ st.markdown("""
 # region filterring data
 st.markdown("---")  # horizontal line separator
 
-col1, col2,col3, col4, col5 = st.columns([1, 1, 1, 1,0.5])
+col1, col2,col3, col4, col5, col6 = st.columns([1, 1, 1, 1, 1,0.5])
 
 with col1:
     st.markdown(
@@ -183,6 +206,14 @@ with col4:
     )
 
 with col5:
+    selected_category_4 = st.selectbox(
+        "Batch",
+        options=["Batch Option"],
+        index=0,
+        key="category_filter_4"
+    )
+
+with col6:
     st.markdown(
         f"""
         <div style='
@@ -250,9 +281,69 @@ st.plotly_chart(bar_plot(filtered_df,"DateTime","OK","Station","Output Productio
 
 # ------------------------------
 # Top NG Line
-st.subheader("🚨 Top 5 NG Line")
-group_1 = df.groupby('Station', as_index=False)['NG'].sum()
-top5_NG = group_1.nlargest(5, 'NG')
+col1, col2= st.columns(2)
+with col1:
+    st.subheader(" 📈 Production Performance Matrix")
 
-st.plotly_chart(scatter_plot(top5_NG, "Station", "NG","Station","Top 5 NG by Station")
-, use_container_width=True)
+
+
+
+col1, col2= st.columns(2)
+with col1:
+    group_1 = df.groupby('Station', as_index=False)['NG'].sum()
+    top5_NG = group_1.nlargest(5, 'NG')
+
+    st.plotly_chart(scatter_plot(top5_NG, "Station", "NG","Station","🚨 Top 5 NG Line")
+    , use_container_width=True)
+
+with col2:
+    station_df = filtered_df.copy()
+    # station_df.rename(columns={"index": "Time", "Packing" : "Output"}, inplace=True)
+    station_df = station_df[station_df['Station'] =='Packing']
+    group_out = station_df.groupby('Date', as_index=False)['OK'].sum()
+
+    fig = px.bar(
+    group_out,
+    x="OK",                 # x-axis (values)
+    y="Date",               # y-axis (categories)
+    orientation='h',        # horizontal orientation
+    text="OK",
+    title="📦 Packing Output by Date",
+    color="OK",
+    color_continuous_scale="Viridis"
+    )
+
+    fig.add_vline(
+    x=1000,  # line position (x since bars are horizontal)
+    line_dash="dash",      # --- dashed line
+    line_color="red",      # color
+    line_width=2,
+    annotation_text="Target minimum = 1000",
+    annotation_position="top right"
+    )
+
+# Style and layout
+    fig.update_traces(textposition="outside")
+    fig.update_layout(
+    title_x=0.5,
+    xaxis_title="Total OK Units",
+    yaxis_title="Date",
+    showlegend=False,
+    bargap=0.3
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
+
+
+
+
+
+col1, col2, col3, col4 = st.columns(4)
+with col1:
+    make_card("📦 Output", "12,480", "Units Today", "#27AE60")
+with col2:
+    make_card("🎯 Target", "1200", "Date", "#D1CE1E")
+with col3:
+    make_card("⚙️ Material Processing", "98.5%", "This Shift", "#2980B9")
+with col4:
+    make_card("❌ NG Rate", "1.2%", "Target < 2%", "#E74C3C")
