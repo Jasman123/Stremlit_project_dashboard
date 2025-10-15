@@ -10,9 +10,6 @@ CUSTOM_ORDER = [
     "UV Curing dispense",
     "IC Bonding",
     "Pd/VC Bonding",
-    "Check Bonding result",
-    "OVEN",
-    "Plasma Cleaning",
     "Wire Bonding",
     "Wire Checking",
     "Lens Bonding",
@@ -27,6 +24,9 @@ CUSTOM_ORDER = [
     "Check Connector",
     "Packing"
 ]
+
+TODAY = pd.Timestamp.today().date()
+# print(f'this result date {TODAY}')
 
 def bar_plot (df, x_axis, y_axis, color, title, CUSTOM_ORDER=None):
     if CUSTOM_ORDER and color in df.columns:
@@ -164,6 +164,25 @@ st.markdown("""
 # region filterring data
 st.markdown("---")  # horizontal line separator
 
+
+df['Date'] = pd.to_datetime(df['Date'], errors='coerce').dt.date
+unique_dates = sorted({d.isoformat() for d in df['Date'].dropna()})  # set -> unique
+categories_dates = ["All"] + unique_dates
+today_iso = pd.Timestamp.today().date().isoformat()
+
+default_index = 0
+try:
+    default_index = categories_dates.index(today_iso)
+except ValueError:
+    # today not present, default stays 0
+    default_index = 0
+
+# # --- Debugging output (remove when working)
+# st.write("DEBUG: today_iso =", today_iso)
+# st.write("DEBUG: first 10 categories_dates =", categories_dates[:10])
+# st.write("DEBUG: default_index computed =", default_index)
+
+
 col1, col2,col3, col4, col5, col6 = st.columns([1, 1, 1, 1, 1,0.5])
 
 with col1:
@@ -182,28 +201,20 @@ with col2:
     )
 
 with col3:
-    df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
-    categories_2 = ["All"] + sorted(
-        df['Date'].dropna().dt.strftime('%Y-%m-%d').unique().tolist()
-    )
     selected_category_2 = st.selectbox(
-        "Star Date",
-        options=categories_2,
-        index=0,
-        key="category_filter_2"
-    )
+    "Start Date",
+    options=categories_dates,
+    index=default_index,
+    key="category_filter_2"
+)
 
 with col4:
-    df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
-    categories_3 = ["All"] + sorted(
-        df['Date'].dropna().dt.strftime('%Y-%m-%d').unique().tolist()
-    )
     selected_category_3 = st.selectbox(
-        "End Date",
-        options=categories_3,
-        index=0,
-        key="category_filter_3"
-    )
+    "End Date",
+    options=categories_dates,
+    index=default_index,
+    key="category_filter_3"
+)
 
 with col5:
     selected_category_4 = st.selectbox(
@@ -273,67 +284,135 @@ st.dataframe(
     hide_index=False
 )
 
+st.markdown("---")
 
 # ------------------------------
 # Plotly bar chart
-st.subheader("Production Station Pcs")
+st.subheader("🧰 Production Station Pcs")
 st.plotly_chart(bar_plot(filtered_df,"DateTime","OK","Station","Output Production Daily",  CUSTOM_ORDER))
+
+st.markdown("---")
 
 # ------------------------------
 # Top NG Line
-col1, col2= st.columns(2)
+st.subheader(" 📈 Production Performance Matrix")
+col1, col2 = st.columns(2)
+# ==========================
+#  SELECT BATCH (LEFT)
+# ==========================
 with col1:
-    st.subheader(" 📈 Production Performance Matrix")
+    # Header with padding
+    st.markdown(
+        """
+        <h3 style="
+            padding-left: 20px;
+            padding-top: 20px;
+            color: #2C3E50;
+            font-weight: 600;
+        ">
+            🧩 Select Batch
+        </h3>
+        """,
+        unsafe_allow_html=True
+    )
 
+    # Batch selector
+    batchs_available = ['24']
+    selected_batch = st.selectbox(
+        "",
+        options=batchs_available,
+        key="batch_select"
+    )
 
-
-
-col1, col2= st.columns(2)
-with col1:
+    # Top 5 NG Chart
     group_1 = df.groupby('Station', as_index=False)['NG'].sum()
     top5_NG = group_1.nlargest(5, 'NG')
+    st.plotly_chart(
+        scatter_plot(top5_NG, "Station", "NG", "Station", "🚨 Top 5 NG Line"),
+        use_container_width=True
+    )
 
-    st.plotly_chart(scatter_plot(top5_NG, "Station", "NG","Station","🚨 Top 5 NG Line")
-    , use_container_width=True)
-
+# ==========================
+# SELECT WEEK (RIGHT)
+# ==========================
 with col2:
-    station_df = filtered_df.copy()
-    # station_df.rename(columns={"index": "Time", "Packing" : "Output"}, inplace=True)
-    station_df = station_df[station_df['Station'] =='Packing']
+    # Ensure datetime conversion
+    df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
+    df['ISO_Year'] = df['Date'].dt.isocalendar().year
+    df['ISO_Week'] = df['Date'].dt.isocalendar().week
+
+    today = pd.Timestamp.today()
+    current_week = today.isocalendar().week
+    current_year = today.year
+
+    # Week header
+    st.markdown(
+        """
+        <h3 style="
+            padding-left: 20px;
+            padding-top: 20px;
+            color: #2C3E50;
+            font-weight: 600;
+        ">
+            📆 Select Week
+        </h3>
+        """,
+        unsafe_allow_html=True
+    )
+
+    # Week selector
+    weeks_available = sorted(df['ISO_Week'].unique().tolist())
+    if current_week in weeks_available:
+        default_index = weeks_available.index(current_week)
+    else:
+        default_index = len(weeks_available) - 1  # fallback to last week
+
+    selected_week = st.selectbox(
+        "",
+        options=weeks_available,
+        index=default_index,
+        key="week_select"
+    )
+
+    # Filter & plot
+    filteredout_df = df[
+        (df['ISO_Week'] == selected_week) &
+        (df['ISO_Year'] == current_year)
+    ].copy()
+
+    station_df = filteredout_df[filteredout_df['Station'] == 'Packing']
     group_out = station_df.groupby('Date', as_index=False)['OK'].sum()
 
     fig = px.bar(
-    group_out,
-    x="OK",                 # x-axis (values)
-    y="Date",               # y-axis (categories)
-    orientation='h',        # horizontal orientation
-    text="OK",
-    title="📦 Packing Output by Date",
-    color="OK",
-    color_continuous_scale="Viridis"
+        group_out,
+        x="OK",
+        y="Date",
+        orientation='h',
+        text="OK",
+        title=f"📦 Packing Output — Week {selected_week}",
+        color="OK",
+        color_continuous_scale="Viridis"
     )
 
     fig.add_vline(
-    x=1000,  # line position (x since bars are horizontal)
-    line_dash="dash",      # --- dashed line
-    line_color="red",      # color
-    line_width=2,
-    annotation_text="Target minimum = 1000",
-    annotation_position="top right"
+        x=1000,
+        line_dash="dash",
+        line_color="red",
+        line_width=2,
+        annotation_text="Target minimum = 1000",
+        annotation_position="top right"
     )
 
-# Style and layout
     fig.update_traces(textposition="outside")
     fig.update_layout(
-    title_x=0.5,
-    xaxis_title="Total OK Units",
-    yaxis_title="Date",
-    showlegend=False,
-    bargap=0.3
+        title_x=0.5,
+        xaxis_title="Total OK Units",
+        yaxis_title="Date",
+        showlegend=False,
+        bargap=0.3
     )
 
     st.plotly_chart(fig, use_container_width=True)
-
 
 
 
@@ -347,3 +426,31 @@ with col3:
     make_card("⚙️ Material Processing", "98.5%", "This Shift", "#2980B9")
 with col4:
     make_card("❌ NG Rate", "1.2%", "Target < 2%", "#E74C3C")
+
+st.markdown("---")
+
+st.subheader("🔄 Batch Analyze Flow")
+
+col1, col2 = st.columns([1,2])
+
+with col1:
+    data = {
+    'Category': ['Processing', 'OK', 'NG', 'Gaps'],
+    'Value': [120, 45, 80, 30]
+    }
+
+    df_pie = pd.DataFrame(data)
+
+    fig = px.pie(
+    df_pie,
+    names='Category',
+    values='Value',
+    title='Batch Process',
+    color_discrete_sequence=px.colors.qualitative.Set1,
+    hole=0.6  
+    )
+
+
+    st.plotly_chart(fig, use_container_width=True)
+
+
