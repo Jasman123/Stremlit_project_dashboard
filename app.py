@@ -25,8 +25,10 @@ CUSTOM_ORDER = [
     "Packing"
 ]
 
-TODAY = pd.Timestamp.today().date()
-# print(f'this result date {TODAY}')
+custom_order_time = [
+    '10:00', '12:00', '15:00', '17:00',
+    '20:00', '22:00', '0:00', '3:00', '5:00','8:00'
+]
 
 def bar_plot (df, x_axis, y_axis, color, title, CUSTOM_ORDER=None):
     if CUSTOM_ORDER and color in df.columns:
@@ -176,6 +178,9 @@ try:
 except ValueError:
     # today not present, default stays 0
     default_index = 0
+
+
+df['Time'] = pd.Categorical(df['Time'], categories=custom_order_time, ordered=True)
 
 # # --- Debugging output (remove when working)
 # st.write("DEBUG: today_iso =", today_iso)
@@ -429,7 +434,7 @@ with col4:
 
 st.markdown("---")
 
-st.subheader("🔄 Batch Analyze Flow")
+st.subheader("🔄 Batch Analyze Flow (Under Building)")
 
 col1, col2 = st.columns([1,2])
 
