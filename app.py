@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 from streamlit_autorefresh import st_autorefresh
-
+from IPython.display import HTML
 
 CUSTOM_ORDER = [
     "Incoming Check",
@@ -17,7 +17,7 @@ CUSTOM_ORDER = [
     "U Lens",
     "Bake/Oven",
     "Upload Program",
-    "Diving Board",
+    "Divide Board",
     "Labeling",
     "BERT Test",
     "Dispensing Reverse",
@@ -25,7 +25,7 @@ CUSTOM_ORDER = [
     "Packing"
 ]
 
-custom_order_time = [
+CUSTOM_ORDER_TIME = [
     '10:00', '12:00', '15:00', '17:00',
     '20:00', '22:00', '0:00', '3:00', '5:00','8:00'
 ]
@@ -57,8 +57,6 @@ def bar_plot (df, x_axis, y_axis, color, title, CUSTOM_ORDER=None):
     marker_line_color="white",
     )
 
-    min_date = df[x_axis].min()
-    max_date = df[x_axis].max()
 
 
     fig.update_layout(
@@ -72,7 +70,9 @@ def bar_plot (df, x_axis, y_axis, color, title, CUSTOM_ORDER=None):
         xaxis_title_font=dict(size=16),
         yaxis_title_font=dict(size=16),
      
-)
+    )
+
+
     return fig
 
 def scatter_plot(df, x_axis, y_axis, color, title):
@@ -180,11 +180,11 @@ except ValueError:
     default_index = 0
 
 
-df['Time'] = pd.Categorical(df['Time'], categories=custom_order_time, ordered=True)
+df['Time'] = pd.Categorical(df['Time'], categories=CUSTOM_ORDER_TIME, ordered=True)
 
 # # --- Debugging output (remove when working)
 # st.write("DEBUG: today_iso =", today_iso)
-# st.write("DEBUG: first 10 categories_dates =", categories_dates[:10])
+# st.write("DEBUG: first 10 categories_dates =", categories_dates)
 # st.write("DEBUG: default_index computed =", default_index)
 
 
@@ -278,6 +278,7 @@ pivot_1 = pivot_1[[col for col in CUSTOM_ORDER if col in pivot_1.columns]]
 pivot_1['Total per Time'] = pivot_1.sum(axis=1)
 pivot_1.loc['Grand Total'] = pivot_1.sum(numeric_only=True)
 pivot_1 = pivot_1.applymap(lambda x: f"{x:,.0f}" if isinstance(x, (int, float)) else x)
+
 
 
 # ------------------------------
@@ -396,7 +397,17 @@ with col2:
         text="OK",
         title=f"📦 Packing Output — Week {selected_week}",
         color="OK",
-        color_continuous_scale="Viridis"
+         color_continuous_scale=[
+        (0, "black"),  
+        (0.25, "red"),       
+        (0.75, "yellow"), 
+        (1, "green")     
+    ],
+    range_color=[0, 1000]
+        
+    )
+    fig.update_yaxes(
+    tickformat="%Y-%m-%d"
     )
 
     fig.add_vline(
@@ -434,28 +445,103 @@ with col4:
 
 st.markdown("---")
 
-st.subheader("🔄 Batch Analyze Flow (Under Building)")
+st.subheader("🔄 Batch Analyze Flow ")
 
 col1, col2 = st.columns([1,2])
 
 with col1:
-    data = {
-    'Category': ['Processing', 'OK', 'NG', 'Gaps'],
-    'Value': [120, 45, 80, 30]
-    }
 
-    df_pie = pd.DataFrame(data)
+    # Batch selector
+    batchs_available_process = ["All"] + df['Batch'].unique().tolist()
 
-    fig = px.pie(
-    df_pie,
-    names='Category',
-    values='Value',
-    title='Batch Process',
-    color_discrete_sequence=px.colors.qualitative.Set1,
-    hole=0.6  
+    selected_batch_process = st.selectbox(
+    "",
+    options=batchs_available_process,
+    key="batch_select_process"
+    )
+    
+    batch_df = df.copy()
+
+    if selected_batch_process != "All":
+        batch_df = batch_df[batch_df["Batch"] == selected_batch_process]
+
+    else:
+        batch_df = batch_df
+    
+    pie_df = batch_df.melt(
+    id_vars=["Batch"],
+    value_vars=["OK", "NG"],
+    var_name="Category",
+    value_name="Value"
     )
 
+    pie_df = pie_df.groupby("Category", as_index=False)["Value"].sum()
+    pie_df["Category"] = pie_df["Category"].str.strip().str.upper()
 
+
+    # st.dataframe(
+    # pie_df,
+    # use_container_width=True,
+    # hide_index=False
+    # )
+
+
+
+    fig = px.pie(
+    pie_df,
+    names="Category",
+    values="Value",
+    color="Category",
+    color_discrete_map={"OK": "#2E8B57", "NG": "#D9534F"},
+    hole=0.6
+)
+
+    # --- Add selected batch name in the center ---
+    fig.add_annotation(
+        text=selected_batch_process,
+        x=0.5, y=0.5,
+        font=dict(size=30, color="#333", family="Arial Black"),
+        showarrow=False
+    )
+
+    # --- Display in Streamlit ---
     st.plotly_chart(fig, use_container_width=True)
+
+
+with col2:
+    filtered_2_df = batch_df.copy()
+    filtered_2_df[["OK", "NG"]] = filtered_2_df[["OK", "NG"]].fillna(0)
+
+    df_group_1 = (
+        filtered_2_df
+        .groupby("Station")[["OK", "NG"]]
+        .sum()
+        .reset_index() 
+    )
+    
+    df_melted = df_group_1.melt(id_vars="Station", value_vars=["OK", "NG"], var_name="Status", value_name="Count")
+
+# Plot stacked bar chart
+    fig = px.bar(
+    df_melted,
+    x="Station",
+    y="Count",
+    color="Status",
+    text="Count",
+    title="📊 Production Result by Station",
+    color_discrete_map={
+        "OK": "#2E8B57",   # sea green
+        "NG": "#D9534F"    # soft red
+    },
+    category_orders={"Station": CUSTOM_ORDER}
+    )
+
+# Make bars stacked
+    fig.update_layout(barmode="stack")
+
+# Display in Streamlit
+    st.plotly_chart(fig, use_container_width=True)
+
+
 
 
