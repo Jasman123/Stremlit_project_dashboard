@@ -452,13 +452,27 @@ col1, col2 = st.columns([1,2])
 with col1:
 
     # Batch selector
+    df['Batch'] = df['Batch'].astype(str).str.strip()
+    df['Batch'] = df['Batch'].str.strip().str.lower()
     batchs_available_process = ["All"] + df['Batch'].unique().tolist()
 
-    selected_batch_process = st.selectbox(
-    "",
-    options=batchs_available_process,
-    key="batch_select_process"
-    )
+    col11, col12 = st.columns(2)
+
+    with col11:
+        selected_batch_process = st.selectbox(
+        "",
+        options=batchs_available_process,
+        key="batch_select_process"
+        )
+
+    with col12:
+        model_type = st.radio(
+            "",
+            options=["TX","RX"],
+            horizontal=True
+        )
+
+    
     
     batch_df = df.copy()
 
@@ -467,6 +481,8 @@ with col1:
 
     else:
         batch_df = batch_df
+
+    batch_df = batch_df[batch_df['TYPE'] == model_type]
     
     pie_df = batch_df.melt(
     id_vars=["Batch"],
@@ -477,14 +493,6 @@ with col1:
 
     pie_df = pie_df.groupby("Category", as_index=False)["Value"].sum()
     pie_df["Category"] = pie_df["Category"].str.strip().str.upper()
-
-
-    # st.dataframe(
-    # pie_df,
-    # use_container_width=True,
-    # hide_index=False
-    # )
-
 
 
     fig = px.pie(
