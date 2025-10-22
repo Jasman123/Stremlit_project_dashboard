@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 from streamlit_autorefresh import st_autorefresh
-from IPython.display import HTML
 
 CUSTOM_ORDER = [
     "Incoming Check",
@@ -549,6 +548,7 @@ with col2:
 
 # Display in Streamlit
     st.plotly_chart(fig, use_container_width=True)
+
 
 
 
