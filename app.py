@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 from streamlit_autorefresh import st_autorefresh
-from IPython.display import HTML
+
 
 CUSTOM_ORDER = [
     "Incoming Check",
@@ -466,11 +466,14 @@ with col1:
         )
 
     with col12:
+        st.markdown("<div style='padding-top:25px;'></div>", unsafe_allow_html=True)
         model_type = st.radio(
             "",
             options=["TX","RX"],
-            horizontal=True
+            horizontal=True,
+            label_visibility="collapsed"
         )
+    
 
     
     
