@@ -75,27 +75,39 @@ def bar_plot (df, x_axis, y_axis, color, title, CUSTOM_ORDER=None):
 
     return fig
 
-def scatter_plot(df, x_axis, y_axis, color, title):
+def scatter_plot(df, x_axis, y_axis, color, symbol, title):
     fig = px.scatter(
     df,
     x=x_axis,
     y=y_axis,
     color=color,
+    symbol=symbol,
     size=y_axis,
     text=y_axis,
     title=title
-)
+    )
 
     fig.update_traces(
-    textposition="top center",
-    textfont=dict(size=14, color="#333", family="Arial Black"),
-    marker=dict(
-        line=dict(width=2, color="white"),
-        opacity=0.9
-    ),
-    hovertemplate="<b>Station:</b> %{x}<br><b>NG Count:</b> %{y}<extra></extra>"
+        textposition="top center",
+        textfont=dict(size=14, color="#333", family="Arial Black"),
+        marker=dict(line=dict(width=2, color="white"), opacity=0.9),
+        hovertemplate="<b>Station:</b> %{x}<br><b>Type:</b> %{customdata[0]}<br><b>NG Count:</b> %{y}<extra></extra>",
+        customdata=df[[symbol]]
+    )
 
-)
+    fig.update_yaxes(range=[0, df[y_axis].max() * 1.3])
+
+    
+
+    fig.update_layout(
+        plot_bgcolor="white",
+        paper_bgcolor="white",
+        title=dict(x=0.5),
+        font=dict(family="Arial", size=13),
+        legend_title=f"{color} / {symbol}"
+    )
+
+
     return fig
 
 st.set_page_config(
@@ -279,7 +291,8 @@ pivot_1['Total per Time'] = pivot_1.sum(axis=1)
 pivot_1.loc['Grand Total'] = pivot_1.sum(numeric_only=True)
 pivot_1 = pivot_1.applymap(lambda x: f"{x:,.0f}" if isinstance(x, (int, float)) else x)
 
-
+df['Batch'] = df['Batch'].astype(str).str.strip()
+df['Batch'] = df['Batch'].str.strip().str.lower()
 
 # ------------------------------
 # Display DataFrame
@@ -323,7 +336,7 @@ with col1:
     )
 
     # Batch selector
-    batchs_available = ['24']
+    batchs_available = ["All"] + df['Batch'].unique().tolist()
     selected_batch = st.selectbox(
         "",
         options=batchs_available,
@@ -331,12 +344,18 @@ with col1:
     )
 
     # Top 5 NG Chart
-    group_1 = df.groupby('Station', as_index=False)['NG'].sum()
+    df_NG = df.copy()
+
+    if selected_batch != "All":
+        df_NG = df_NG[df_NG["Batch"] == selected_batch]
+
+    group_1 = df_NG.groupby(['TYPE', 'Station'], as_index=False)['NG'].sum()
     top5_NG = group_1.nlargest(5, 'NG')
     st.plotly_chart(
-        scatter_plot(top5_NG, "Station", "NG", "Station", "🚨 Top 5 NG Line"),
+        scatter_plot(top5_NG, "Station", "NG", "Station","TYPE", "🚨 Top 5 NG Line"),
         use_container_width=True
     )
+   
 
 # ==========================
 # SELECT WEEK (RIGHT)
@@ -452,8 +471,6 @@ col1, col2 = st.columns([1,2])
 with col1:
 
     # Batch selector
-    df['Batch'] = df['Batch'].astype(str).str.strip()
-    df['Batch'] = df['Batch'].str.strip().str.lower()
     batchs_available_process = ["All"] + df['Batch'].unique().tolist()
 
     col11, col12 = st.columns(2)
@@ -552,6 +569,7 @@ with col2:
 
 # Display in Streamlit
     st.plotly_chart(fig, use_container_width=True)
+
 
 
 
