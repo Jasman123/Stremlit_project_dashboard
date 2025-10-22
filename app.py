@@ -326,6 +326,7 @@ with col1:
         <h3 style="
             padding-left: 20px;
             padding-top: 20px;
+            padding-bottom: 45px;
             color: #2C3E50;
             font-weight: 600;
         ">
@@ -340,7 +341,8 @@ with col1:
     selected_batch = st.selectbox(
         "",
         options=batchs_available,
-        key="batch_select"
+        key="batch_select",
+        label_visibility="collapsed"
     )
 
     # Top 5 NG Chart
@@ -479,7 +481,8 @@ with col1:
         selected_batch_process = st.selectbox(
         "",
         options=batchs_available_process,
-        key="batch_select_process"
+        key="batch_select_process",
+        label_visibility="collapsed"
         )
 
     with col12:
