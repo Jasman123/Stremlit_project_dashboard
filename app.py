@@ -3,6 +3,7 @@ import pandas as pd
 import plotly.express as px
 from streamlit_autorefresh import st_autorefresh
 
+
 CUSTOM_ORDER = [
     "Incoming Check",
     "Module Dispensing",
@@ -465,11 +466,14 @@ with col1:
         )
 
     with col12:
+        st.markdown("<div style='padding-top:25px;'></div>", unsafe_allow_html=True)
         model_type = st.radio(
             "",
             options=["TX","RX"],
-            horizontal=True
+            horizontal=True,
+            label_visibility="collapsed"
         )
+    
 
     
     
@@ -548,8 +552,6 @@ with col2:
 
 # Display in Streamlit
     st.plotly_chart(fig, use_container_width=True)
-
-
 
 
 
