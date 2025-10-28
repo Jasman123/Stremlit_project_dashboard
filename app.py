@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 from streamlit_autorefresh import st_autorefresh
+from datetime import date 
 
 
 CUSTOM_ORDER = [
@@ -84,15 +85,27 @@ def scatter_plot(df, x_axis, y_axis, color, symbol, title):
     symbol=symbol,
     size=y_axis,
     text=y_axis,
-    title=title
+    title=title,
+
+    symbol_map={
+            "RX": "circle",
+            "TX": "diamond"
+        },
+        category_orders={
+            symbol: ["RX", "TX"]
+        }
+    
     )
+
+    for trace in fig.data:
+        trace_symbol = trace.name.split(",")[-1].strip() 
+        trace.customdata = [[trace_symbol]] * len(trace.x)  
 
     fig.update_traces(
         textposition="top center",
         textfont=dict(size=14, color="#333", family="Arial Black"),
         marker=dict(line=dict(width=2, color="white"), opacity=0.9),
-        hovertemplate="<b>Station:</b> %{x}<br><b>Type:</b> %{customdata[0]}<br><b>NG Count:</b> %{y}<extra></extra>",
-        customdata=df[[symbol]]
+        hovertemplate="<b>Station:</b> %{x}<br><b>Type:</b> %{customdata[0]}<br><b>NG Count:</b> %{y}<extra></extra>"
     )
 
     fig.update_yaxes(range=[0, df[y_axis].max() * 1.3])
@@ -178,7 +191,6 @@ st.markdown("""
 # region filterring data
 st.markdown("---")  # horizontal line separator
 
-
 df['Date'] = pd.to_datetime(df['Date'], errors='coerce').dt.date
 unique_dates = sorted({d.isoformat() for d in df['Date'].dropna()})  # set -> unique
 categories_dates = ["All"] + unique_dates
@@ -193,14 +205,18 @@ except ValueError:
 
 
 df['Time'] = pd.Categorical(df['Time'], categories=CUSTOM_ORDER_TIME, ordered=True)
+df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
+df['Batch'] = df['Batch'].astype(str).str.strip()
+df['Batch'] = df['Batch'].str.strip().str.lower()
+batchs_available = ["All"] + df['Batch'].unique().tolist()
 
 # # --- Debugging output (remove when working)
 # st.write("DEBUG: today_iso =", today_iso)
 # st.write("DEBUG: first 10 categories_dates =", categories_dates)
 # st.write("DEBUG: default_index computed =", default_index)
+filtered_df = df.copy()
 
-
-col1, col2,col3, col4, col5, col6 = st.columns([1, 1, 1, 1, 1,0.5])
+col1, col2, col3, col4, col5, col6 = st.columns([1, 1, 1, 1, 1, 0.5])
 
 with col1:
     st.markdown(
@@ -217,29 +233,42 @@ with col2:
         key="category_filter_1"
     )
 
+    if selected_category_1 != "All":
+        filtered_df = filtered_df[filtered_df['TYPE'] == selected_category_1]
+
 with col3:
-    selected_category_2 = st.selectbox(
-    "Start Date",
-    options=categories_dates,
-    index=default_index,
-    key="category_filter_2"
-)
+    selected_category_2 = st.date_input(
+        "Start Date",
+        value=date.today(),
+        key="category_filter_2"
+    )
 
 with col4:
-    selected_category_3 = st.selectbox(
-    "End Date",
-    options=categories_dates,
-    index=default_index,
-    key="category_filter_3"
-)
+    selected_category_3 = st.date_input(
+        "End Date",
+        value=date.today(),
+        key="category_filter_3"
+    )
+
+    # ✅ Apply date filtering (no "All" string check)
+    start_date = pd.to_datetime(selected_category_2)
+    end_date = pd.to_datetime(selected_category_3)
+    filtered_df = filtered_df[
+        (filtered_df['Date'] >= start_date) &
+        (filtered_df['Date'] <= end_date)
+    ]
 
 with col5:
+    batchs_available_data = ["All"] + filtered_df['Batch'].dropna().unique().tolist()
     selected_category_4 = st.selectbox(
         "Batch",
-        options=["Batch Option"],
+        options=batchs_available_data,
         index=0,
         key="category_filter_4"
     )
+
+    if selected_category_4 != "All":
+        filtered_df = filtered_df[filtered_df['Batch'] == selected_category_4]
 
 with col6:
     st.markdown(
@@ -260,21 +289,8 @@ with col6:
         unsafe_allow_html=True
     )
 
-filtered_df = df.copy()
 
-if selected_category_1 != "All":
-    filtered_df = filtered_df[filtered_df['TYPE'] == selected_category_1]
 
-# Filter by DATE
-filtered_df['Date'] = pd.to_datetime(filtered_df['Date'], errors='coerce')
-
-# Filter by Date Range
-if selected_category_2 != "All" and selected_category_3 != "All":
-    start_date = pd.to_datetime(selected_category_2)
-    end_date = pd.to_datetime(selected_category_3)
-    filtered_df = filtered_df[
-        (filtered_df['Date'] >= start_date) & (filtered_df['Date'] <= end_date)
-    ]
 # endregion
 
 # ------------------------------
@@ -291,8 +307,7 @@ pivot_1['Total per Time'] = pivot_1.sum(axis=1)
 pivot_1.loc['Grand Total'] = pivot_1.sum(numeric_only=True)
 pivot_1 = pivot_1.applymap(lambda x: f"{x:,.0f}" if isinstance(x, (int, float)) else x)
 
-df['Batch'] = df['Batch'].astype(str).str.strip()
-df['Batch'] = df['Batch'].str.strip().str.lower()
+
 
 # ------------------------------
 # Display DataFrame
@@ -337,7 +352,6 @@ with col1:
     )
 
     # Batch selector
-    batchs_available = ["All"] + df['Batch'].unique().tolist()
     selected_batch = st.selectbox(
         "",
         options=batchs_available,
@@ -478,15 +492,16 @@ with col1:
     col11, col12 = st.columns(2)
 
     with col11:
+        st.markdown("<div style='margin-top: 20px;'></div>", unsafe_allow_html=True)
         selected_batch_process = st.selectbox(
-        "",
-        options=batchs_available_process,
-        key="batch_select_process",
-        label_visibility="collapsed"
+            "",
+            options=batchs_available_process,
+            key="batch_select_process",
+            label_visibility="collapsed"
         )
 
     with col12:
-        st.markdown("<div style='padding-top:25px;'></div>", unsafe_allow_html=True)
+        st.markdown("<div style='padding-top: 10px;'></div>", unsafe_allow_html=True)
         model_type = st.radio(
             "",
             options=["TX","RX"],
@@ -566,12 +581,14 @@ with col2:
     },
     category_orders={"Station": CUSTOM_ORDER}
     )
+    fig.update_yaxes(range=[0, df_melted["Count"].max() * 1.4])
 
 # Make bars stacked
     fig.update_layout(barmode="stack")
 
 # Display in Streamlit
     st.plotly_chart(fig, use_container_width=True)
+
 
 
 
