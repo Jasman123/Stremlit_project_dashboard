@@ -4,6 +4,13 @@ import plotly.express as px
 from streamlit_autorefresh import st_autorefresh
 from datetime import date 
 
+SUB_CATEGORY = {
+    "Die Bond": ["IC Bonding", "Pd/VC Bonding"],
+    "Machine Only": ["Wire Bonding", "Wire Checking", "Lens Bonding", "Lens CCD  Position Check"],
+    "Dispensing": ["Module Dispensing", "UV Curing dispense", "U Lens","Bake/Oven","Dispensing Reverse"],
+    "Function": ["Incoming Check", "Upload Program", "Divide Board", "Labeling", "BERT Test"],
+    "Packing": ["Check Connector", "Packing"] 
+}
 
 CUSTOM_ORDER = [
     "Incoming Check",
@@ -35,6 +42,7 @@ def bar_plot (df, x_axis, y_axis, color, title, CUSTOM_ORDER=None):
     if CUSTOM_ORDER and color in df.columns:
         df[color] = pd.Categorical(df[color], categories=CUSTOM_ORDER, ordered=True)
         df = df.sort_values(by=color)
+        
 
     fig = px.bar(
         df,
@@ -70,6 +78,7 @@ def bar_plot (df, x_axis, y_axis, color, title, CUSTOM_ORDER=None):
         title_font=dict(size=18),
         xaxis_title_font=dict(size=16),
         yaxis_title_font=dict(size=16),
+        
      
     )
 
@@ -323,7 +332,20 @@ st.markdown("---")
 # ------------------------------
 # Plotly bar chart
 st.subheader("🧰 Production Station Pcs")
-st.plotly_chart(bar_plot(filtered_df,"DateTime","OK","Station","Output Production Daily",  CUSTOM_ORDER))
+options = ["Die Bond", "Machine Only", "Dispensing", "Function","Packing", "All"]
+
+plot_df = filtered_df.copy()
+selection = st.pills("Station Categories", options, selection_mode="multi")
+if "All" not in selection:
+    selected_subcats = []
+    for category in selection:
+        selected_subcats.extend(SUB_CATEGORY.get(category, []))
+    plot_df = plot_df[plot_df['Station'].isin(selected_subcats)]
+
+
+
+# st.markdown(f"Your selected options: {selection}.")
+st.plotly_chart(bar_plot(plot_df,"DateTime","OK","Station","Output Production Daily",  CUSTOM_ORDER))
 
 st.markdown("---")
 
