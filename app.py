@@ -335,7 +335,10 @@ st.subheader("🧰 Production Station Pcs")
 options = ["Die Bond", "Machine Only", "Dispensing", "Function","Packing", "All"]
 
 plot_df = filtered_df.copy()
-selection = st.pills("Station Categories", options, selection_mode="multi")
+if hasattr(st, "pills"):
+    selection = st.pills("Station Categories", options, selection_mode="multi")
+else:
+    selection = st.multiselect("Station Categories", options, default=["All"])
 if "All" not in selection:
     selected_subcats = []
     for category in selection:
@@ -610,6 +613,7 @@ with col2:
 
 # Display in Streamlit
     st.plotly_chart(fig, use_container_width=True)
+
 
 
 
