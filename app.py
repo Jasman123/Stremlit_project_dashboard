@@ -310,6 +310,7 @@ pivot_1 = filtered_df.pivot_table(
     values='OK',
     aggfunc='sum',
     fill_value=0, 
+    observed=False
 )
 pivot_1 = pivot_1[[col for col in CUSTOM_ORDER if col in pivot_1.columns]]
 pivot_1['Total per Time'] = pivot_1.sum(axis=1)
@@ -321,11 +322,7 @@ pivot_1 = pivot_1.applymap(lambda x: f"{x:,.0f}" if isinstance(x, (int, float)) 
 # ------------------------------
 # Display DataFrame
 st.subheader("📋 Station Record Summary")
-st.dataframe(
-    pivot_1,
-    use_container_width=True,
-    hide_index=False
-)
+st.dataframe(pivot_1.style.format("{:,.0f}"), width='stretch')
 
 st.markdown("---")
 
@@ -427,7 +424,9 @@ with col2:
     )
 
     # Week selector
-    weeks_available = sorted(df['ISO_Week'].unique().tolist())
+    df['ISO_Week'] = df['ISO_Week'].astype('Int64')
+    weeks_available = sorted(df['ISO_Week'].dropna().astype(int).unique().tolist())
+
     if current_week in weeks_available:
         default_index = weeks_available.index(current_week)
     else:
@@ -613,7 +612,6 @@ with col2:
 
 # Display in Streamlit
     st.plotly_chart(fig, use_container_width=True)
-
 
 
 
