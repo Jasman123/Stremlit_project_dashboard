@@ -379,6 +379,7 @@ with col1:
     # Batch selector
     selected_batch = st.selectbox(
         "",
+        index = len(batchs_available) - 1,
         options=batchs_available,
         key="batch_select",
         label_visibility="collapsed"
@@ -520,6 +521,7 @@ with col1:
         st.markdown("<div style='margin-top: 20px;'></div>", unsafe_allow_html=True)
         selected_batch_process = st.selectbox(
             "",
+            index = len(batchs_available_process) - 1,
             options=batchs_available_process,
             key="batch_select_process",
             label_visibility="collapsed"
@@ -613,7 +615,6 @@ with col2:
 
 # Display in Streamlit
     st.plotly_chart(fig, use_container_width=True)
-
 
 
 
