@@ -493,19 +493,17 @@ with col2:
     st.plotly_chart(fig, use_container_width=True)
 
 
+# col1, col2, col3, col4 = st.columns(4)
+# with col1:
+#     make_card("📦 Output", "12,480", "Units Today", "#27AE60")
+# with col2:
+#     make_card("🎯 Target", "1200", "Date", "#D1CE1E")
+# with col3:
+#     make_card("⚙️ Material Processing", "98.5%", "This Shift", "#2980B9")
+# with col4:
+#     make_card("❌ NG Rate", "1.2%", "Target < 2%", "#E74C3C")
 
-
-col1, col2, col3, col4 = st.columns(4)
-with col1:
-    make_card("📦 Output", "12,480", "Units Today", "#27AE60")
-with col2:
-    make_card("🎯 Target", "1200", "Date", "#D1CE1E")
-with col3:
-    make_card("⚙️ Material Processing", "98.5%", "This Shift", "#2980B9")
-with col4:
-    make_card("❌ NG Rate", "1.2%", "Target < 2%", "#E74C3C")
-
-st.markdown("---")
+# st.markdown("---")
 
 st.subheader("🔄 Batch Analyze Flow ")
 
