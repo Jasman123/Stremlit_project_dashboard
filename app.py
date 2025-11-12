@@ -216,7 +216,7 @@ except ValueError:
 df['Time'] = pd.Categorical(df['Time'], categories=CUSTOM_ORDER_TIME, ordered=True)
 df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
 df['Batch'] = df['Batch'].astype(str).str.strip()
-df['Batch'] = df['Batch'].str.strip().str.lower()
+df['Batch'] = df['Batch'].str.strip().str.lower().str.replace(' ', '')
 batchs_available = ["All"] + df['Batch'].unique().tolist()
 
 # # --- Debugging output (remove when working)
@@ -615,6 +615,7 @@ with col2:
 
 # Display in Streamlit
     st.plotly_chart(fig, use_container_width=True)
+
 
 
 
