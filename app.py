@@ -466,7 +466,7 @@ with col2:
         (0.75, "yellow"), 
         (1, "green")     
     ],
-    range_color=[0, 1000]
+    range_color=[0, 1500]
         
     )
     fig.update_yaxes(
@@ -474,11 +474,11 @@ with col2:
     )
 
     fig.add_vline(
-        x=1000,
+        x=1500,
         line_dash="dash",
         line_color="red",
         line_width=2,
-        annotation_text="Target minimum = 1000",
+        annotation_text="Target minimum = 1500",
         annotation_position="top right"
     )
 
@@ -615,6 +615,7 @@ with col2:
 
 # Display in Streamlit
     st.plotly_chart(fig, use_container_width=True)
+
 
 
 
