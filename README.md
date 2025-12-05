@@ -42,14 +42,14 @@ This project is ideal for rapid data exploration, internal reporting, and sharin
 ---
 
 # 🗂 Directory Structure
----
+```yaml
 Stremlit_project_dashboard/
 ├── app.py
 ├── requirements.txt
 ├── HourlyLineRecord - DataBase Try.csv
 ├── README.md
 └── .devcontainer/
----
+```
 
 
 ---
