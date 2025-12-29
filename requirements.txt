@@ -2,6 +2,7 @@ streamlit==1.39.0
 pandas==2.2.3
 plotly==5.24.1
 seaborn==0.13.2
-gspread
-oauth2client
-streamlit-autorefresh
+gspread==6.1.2
+oauth2client==4.1.3
+streamlit-autorefresh==1.0.1
+numpy==1.26.4
