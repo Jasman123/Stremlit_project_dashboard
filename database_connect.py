@@ -1,6 +1,23 @@
 import psycopg2
 from psycopg2 import OperationalError
 
+CREATE_TABLE_QUERY = """
+CREATE TABLE IF NOT EXISTS production_data (
+    id SERIAL PRIMARY KEY,
+    date DATE NOT NULL,
+    station_name TEXT,
+    model_type TEXT,
+    ok_quantity INTEGER,
+    ng_quantity INTEGER,
+    production_time INTERVAL,
+    batch_number TEXT,
+    product_line TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+
+"""
+
 def create_connection(db_name, db_user, db_password, db_host, db_port):
     connection = None
     try:
@@ -16,14 +33,15 @@ def create_connection(db_name, db_user, db_password, db_host, db_port):
         print(f"The error '{e}' occurred")
     return connection
 
-def create_table(connection, table_name, create_table_query):
-    cursor = connection.cursor()
+def create_table(connection):
     try:
-        cursor.execute(create_table_query)
+        cursor = connection.cursor()
+        cursor.execute(CREATE_TABLE_QUERY)
         connection.commit()
-        print(f"Table '{table_name}' created successfully")
+        cursor.close()
+        print("✅ Table 'production_data' created successfully")
     except OperationalError as e:
-        print(f"The error '{e}' occurred")
+        print(f"❌ The error '{e}' occurred")
 
 
 conn = create_connection("mydb", "postgres", "123", "localhost", "5432")
