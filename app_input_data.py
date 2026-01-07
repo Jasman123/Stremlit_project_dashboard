@@ -13,7 +13,24 @@ SUB_CATEGORY = {
     "Packing": ["Check Connector", "Packing"]
 }
 
-DATABASE_COLOUMNS = ['Date', 'Station Name', 'Model Type', 'OK Quantity', 'NG Quantity', 'Production Time', 'Batch Number', 'Product Line']
+OPERATOR_LIST = [
+    "Operator A",
+    "Operator B",
+    "Operator C",
+    "Operator D",
+    "Operator E",
+    "Operator F",
+    "Operator G",
+    "Operator H"
+]
+
+SUPPLIER_LIST = [
+    "Supplier X",
+    "Supplier Y",
+    "Supplier Z"
+]
+
+DATABASE_COLOUMNS = ['Date', 'Station Name', 'Model Type', 'OK Quantity', 'NG Quantity', 'Batch Number', 'Product Line']
 
 CUSTOM_ORDER = [
     "Incoming Check",
@@ -74,9 +91,9 @@ if "record_data" not in st.session_state:
     )
 
 # -----------------------------
-st.subheader("🔧 Process & Production Information")
+st.subheader("Running Model Information")
 
-col1, col2, col3, col4, col5, col6, col7 = st.columns([2, 1.2, 1, 1, 1.2, 1, 1.2])
+col1, col2, col3, col4, col5, col6 = st.columns([2, 0.5, 0.5, 0.5, 1,1])
 
 with col1:
     station_name = st.selectbox(
@@ -97,35 +114,6 @@ with col2:
     )
 
 with col3:
-    ok_quantity = st.number_input(
-        "OK Quantity",
-        min_value=0,
-        step=1,
-        value=0,
-        format="%d",
-        help="Number of good units produced"
-    )
-
-with col4:
-    ng_quantity = st.number_input(
-        "NG Quantity",
-        min_value=0,
-        step=1,
-        value=0,
-        format="%d",
-        help="Number of defective units"
-    )
-
-with col5:
-    time_select = st.selectbox(
-        "Production Time",
-        CUSTOM_ORDER_TIME,
-        index=None,
-        placeholder="Select time slot",
-        help="Shift production time record"
-    )
-
-with col6:
     batch_number = st.number_input(
         "Batch Number",
         min_value=1,
@@ -135,13 +123,75 @@ with col6:
         help="Production batch identifier"
     )
 
-with col7:
-    product_line = st.selectbox(
+with col4:
+   
+    tray_number = st.number_input(
+        "Tray Number",
+        min_value=1,
+        step=1,
+        value=1,
+        format="%d",
+        help="Production tray identifier"
+    )
+
+with col5:
+      product_line = st.selectbox(
         "Product Line",
         ["Indo #1", "Indo #2"],
         index=None,
         placeholder="Select line",
         help="Production line location"
+    )
+     
+with col6:
+     supplier = st.selectbox(
+        "Supplier",
+        SUPPLIER_LIST,
+        index=None,
+        placeholder="Select supplier",
+        help="Supplier of the materials"
+    )
+    
+
+st.subheader("Process Station information")
+
+col1, col2, col3, col4 = st.columns([1,1,1,1])
+
+with col1:
+     ok_quantity = st.number_input(
+        "OK Quantity",
+        min_value=0,
+        step=1,
+        value=0,
+        format="%d",
+        help="Number of good units produced"
+    )
+     
+with col2:
+    ng_quantity = st.number_input(
+        "NG Quantity",
+        min_value=0,
+        step=1,
+        value=0,
+        format="%d",
+        help="Number of defective units"
+    )
+
+with col3:
+    defect_type = st.text_input(
+        "Remark Defect Type",
+        value="",
+        placeholder="Enter defect type",
+        help="Type of defect observed"
+    )
+
+with col4:
+    operator_select = st.selectbox(
+        "Operator",
+        OPERATOR_LIST,
+        index=None,
+        placeholder="Select operator",
+        help="Operator responsible for production"
     )
 
 # -----------------------------
@@ -157,7 +207,7 @@ with col_btn1:
     submit = st.button("💾 Save Record", use_container_width=True)
 
 if submit:
-    if not all([station_name, model_type, time_select, product_line]):
+    if not all([station_name, model_type, product_line]):
         st.warning("⚠️ Please complete all required fields.")
     else:
         new_record = {
@@ -166,7 +216,6 @@ if submit:
         'Model Type': model_type,
         'OK Quantity': ok_quantity,
         'NG Quantity': ng_quantity,
-        'Production Time': time_select,
         'Batch Number': batch_number,
         'Product Line': product_line
     }
