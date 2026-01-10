@@ -545,7 +545,7 @@ with col1:
     color="Category",
     color_discrete_map={"OK": "#2E8B57", "NG": "#D9534F"},
     hole=0.6
-)
+    )
 
     # --- Add selected batch name in the center ---
     fig.add_annotation(

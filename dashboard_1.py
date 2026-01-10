@@ -152,7 +152,7 @@ def make_card(title, value, subtitle, color="#27AE60"):
     </div>
     """, unsafe_allow_html=True)
 
-st_autorefresh(interval=30000, limit=None, key="refresh")
+# st_autorefresh(interval=30000, limit=None, key="refresh")
 
 
 
@@ -313,21 +313,37 @@ with tab1:
 
 with tab2:
     with st.container(height=500):
-        st.subheader("📋 Production Records")
-        st.dataframe(
-            filtered_df,
-            use_container_width=True,
-            hide_index=False
-        )
-
+        st.subheader("Under Development Feature")
+       
 with tab3:
     with st.container(height=500):
-        st.subheader("📋 Production Records")
-        st.dataframe(
-            df,
-            use_container_width=True,
-            hide_index=False
-        )
+        st.subheader("Under Development Feature")
+        batchs_available_process = ["All"] + filtered_df['batch_number'].unique().tolist()
+
+        col11, col12 = st.columns(2)
+
+        with col11:
+            st.markdown("<div style='margin-top: 20px;'></div>", unsafe_allow_html=True)
+            selected_batch_process = st.selectbox(
+                "",
+                index = len(batchs_available_process) - 1,
+                options=batchs_available_process,
+                key="batch_select_process",
+                label_visibility="collapsed"
+            )
+
+        with col12:
+            st.markdown("<div style='padding-top: 10px;'></div>", unsafe_allow_html=True)
+            model_type = st.radio(
+                "",
+                options=["TX","RX"],
+                horizontal=True,
+                label_visibility="collapsed"
+            )
+        
+       
+        
+        
 
 
 col1, col2, col3, col4 = st.columns(4)
