@@ -31,6 +31,8 @@ conn = create_connection(
     os.getenv("DB_PORT", "5432")
 )
 
+def efficiency_color(value, threshold=70):
+    return "#FF5733" if value < threshold else "#28a745"
 
 def bar_plot (df, x_axis, y_axis, color, title, CUSTOM_ORDER=None):
     if CUSTOM_ORDER and color in df.columns:
@@ -167,7 +169,7 @@ def load_data():
 
 
 df = load_data()
-# st.write(df.columns)
+st.write(df.columns)
 
 df['production_date'] = pd.to_datetime(df['production_date'])
 df['model_type'] = df['model_type'].astype(str)
@@ -268,20 +270,64 @@ with col6:
         unsafe_allow_html=True
     )
 
+#total incoming
+df_incoming = filtered_df[filtered_df['station_name'] == 'Incoming Check']
+total_incoming = df_incoming['ok_quantity'].sum() + df_incoming['ng_quantity'].sum()
+
+#total ouptput
+df_output = filtered_df[filtered_df['station_name'] == 'Packing']
+total_output = df_output['ok_quantity'].sum() + df_output['ng_quantity'].sum()
+
+remaining_material_percent = (
+    (total_incoming - total_output) / total_incoming * 100 if total_incoming > 0 else 0
+)
 
 pivot_df = filtered_df.copy()
 pivot_df.drop(columns=['id', 'production_date'], inplace=True)
+
+pivot_1 = pivot_df.pivot_table(
+    index='station_name',
+    values=['ok_quantity', 'ng_quantity'],
+    aggfunc='sum',
+    fill_value=0, 
+).reset_index()
+pivot_1['Total per Time'] = pivot_1.sum(axis=1, numeric_only=True)
+pivot_1['Line Efficiency (%)'] = (
+    pivot_1['ok_quantity'] /
+    pivot_1['Total per Time'] * 100
+) if pivot_1['Total per Time'].sum() > 0 else 0 
+
+average_efficiency = (
+    pivot_1['Line Efficiency (%)'].sum() /
+    len(pivot_1) if len(pivot_1) > 0 else 0
+)
 
 
 with st.container(height=500):
     st.subheader("📋 Production Records")
     st.dataframe(
-        pivot_df,
+        pivot_1,
         use_container_width=True,
         hide_index=False
     )
 
 
 
+col1, col2, col3, col4 = st.columns(4)
+with col1:
+    make_card("📦 Incoming", total_incoming, f"from {selected_category_2} until {selected_category_3}", "#27AE60")
+with col2:
+    make_card("🎯 Target", "2000", date.today(), "#D1CE1E")
+with col3:
+    make_card("⚙️ Material Processing", f"{remaining_material_percent:.2f}%", "This Shift", "#2980B9")
+with col4:
+   make_card(
+    title=" Average Line Efficiency",
+    value=f"{average_efficiency:.2f}%",
+    subtitle="Across Selected Stations",
+    color=efficiency_color(average_efficiency)
+)
+
+# st.markdown("---")
 
 
