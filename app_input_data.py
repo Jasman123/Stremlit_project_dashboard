@@ -198,14 +198,16 @@ if submit:
         "Operator Name": operator_select,
         "Remarks": defect_type
     }
-    insert_production_record(conn, new_record)
-    record = pd.read_sql(
+    try:
+        insert_production_record(conn, new_record)
+        record = pd.read_sql(
         "SELECT * FROM production_data;",
         conn
-    )
+        )
+        st.success("✅ Record saved successfully!")
+    except Exception as e:
+        st.error(f"❌ Error saving record: {e}")
 
-with col_btn2:
-    st.success("✅ Record saved successfully!")
 
 with st.container(height=500):
     st.subheader("📋 Production Records")
