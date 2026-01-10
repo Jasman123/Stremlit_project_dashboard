@@ -1,62 +1,17 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-from streamlit_autorefresh import st_autorefresh
+# from streamlit_autorefresh import st_autorefresh
 from datetime import date
 
+from data_info import (
+    CUSTOM_ORDER, 
+    CUSTOM_ORDER_TIME, 
+    DATABASE_COLOUMNS,
+    OPERATOR_LIST,
+    SUPPLIER_LIST
+)
 
-SUB_CATEGORY = {
-    "Die Bond": ["IC Bonding", "Pd/VC Bonding"],
-    "Machine Only": ["Wire Bonding", "Wire Checking", "Lens Bonding", "Lens CCD Position Check"],
-    "Dispensing": ["Module Dispensing", "UV Curing dispense", "U Lens", "Bake/Oven", "Dispensing Reverse"],
-    "Function": ["Incoming Check", "Upload Program", "Divide Board", "Labeling", "BERT Test"],
-    "Packing": ["Check Connector", "Packing"]
-}
-
-OPERATOR_LIST = [
-    "Operator A",
-    "Operator B",
-    "Operator C",
-    "Operator D",
-    "Operator E",
-    "Operator F",
-    "Operator G",
-    "Operator H"
-]
-
-SUPPLIER_LIST = [
-    "Supplier X",
-    "Supplier Y",
-    "Supplier Z"
-]
-
-DATABASE_COLOUMNS = ['Date', 'Station Name', 'Model Type', 'OK Quantity', 'NG Quantity', 'Batch Number', 'Product Line']
-
-CUSTOM_ORDER = [
-    "Incoming Check",
-    "Module Dispensing",
-    "UV Curing dispense",
-    "IC Bonding",
-    "Pd/VC Bonding",
-    "Wire Bonding",
-    "Wire Checking",
-    "Lens Bonding",
-    "Lens CCD Position Check",
-    "U Lens",
-    "Bake/Oven",
-    "Upload Program",
-    "Divide Board",
-    "Labeling",
-    "BERT Test",
-    "Dispensing Reverse",
-    "Check Connector",
-    "Packing"
-]
-
-CUSTOM_ORDER_TIME = [
-    '10:00', '12:00', '15:00', '17:00',
-    '20:00', '22:00', '00:00', '03:00', '05:00', '08:00'
-]
 
 
 st.set_page_config(
@@ -244,7 +199,7 @@ st.download_button(
 
 
 st.divider()
-st.subheader("🗑️ Delete Production Record")
+st.subheader("🗑️ Delete Production Record (under developing)")
 
 col_d1, col_d2, col_d3, col_d4 = st.columns([1, 1.2, 2, 1])
 
