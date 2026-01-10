@@ -141,8 +141,8 @@ def make_card(title, value, subtitle, color="#27AE60"):
         background-color: #ffffff;
         border-left: 8px solid {color};
         border-radius: 10px;
-        padding: 15px;
-        margin: 5px;
+        padding: 5px;
+        margin: 2px;
         box-shadow: 2px 2px 10px rgba(0,0,0,0.1);
         text-align: center;
     ">
@@ -169,7 +169,7 @@ def load_data():
 
 
 df = load_data()
-st.write(df.columns)
+# st.write(df.columns)
 
 df['production_date'] = pd.to_datetime(df['production_date'])
 df['model_type'] = df['model_type'].astype(str)
@@ -302,15 +302,32 @@ average_efficiency = (
     len(pivot_1) if len(pivot_1) > 0 else 0
 )
 
+tab1, tab2, tab3 = st.tabs(["📋 Production Records", " 📈 Production Performance Matrix", "🔄 Batch Analyze Flow "])
+with tab1:
+    with st.container(height=500):
+        st.dataframe(
+            pivot_1,
+            use_container_width=True,
+            hide_index=False
+        )
 
-with st.container(height=500):
-    st.subheader("📋 Production Records")
-    st.dataframe(
-        pivot_1,
-        use_container_width=True,
-        hide_index=False
-    )
+with tab2:
+    with st.container(height=500):
+        st.subheader("📋 Production Records")
+        st.dataframe(
+            filtered_df,
+            use_container_width=True,
+            hide_index=False
+        )
 
+with tab3:
+    with st.container(height=500):
+        st.subheader("📋 Production Records")
+        st.dataframe(
+            df,
+            use_container_width=True,
+            hide_index=False
+        )
 
 
 col1, col2, col3, col4 = st.columns(4)
