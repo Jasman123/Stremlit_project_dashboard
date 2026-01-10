@@ -1,0 +1,68 @@
+# =========================
+# Python cache
+# =========================
+__pycache__/
+*.py[cod]
+
+# =========================
+# Environment variables (IMPORTANT)
+# =========================
+.env
+.env.*
+*.env
+
+# =========================
+# VS Code / Dev Container
+# =========================
+.vscode/
+.devcontainer/
+
+# =========================
+# Streamlit
+# =========================
+.streamlit/
+.streamlit/secrets.toml
+
+# =========================
+# Logs & temp
+# =========================
+*.log
+*.tmp
+*.cache
+
+# =========================
+# OS files
+# =========================
+.DS_Store
+Thumbs.db
+
+# =========================
+# Database / local data files
+# =========================
+*.db
+*.sqlite
+*.csv
+
+# ⚠️ If you want to KEEP this CSV, remove the line above
+# HourlyLineRecord - DataBase Try.csv
+
+# =========================
+# GCP / Cloud credentials (CRITICAL)
+# =========================
+*.json
+
+# ⚠️ NEVER commit files like:
+# nth-camto-468405-c8-552f3d3718ae.json
+
+# =========================
+# Build / packaging
+# =========================
+build/
+dist/
+*.egg-info/
+
+# =========================
+# Docker
+# =========================
+docker-compose.override.yml
+*.pid

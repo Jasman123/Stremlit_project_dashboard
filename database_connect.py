@@ -1,109 +1,151 @@
-from multiprocessing.dummy import connection
 import psycopg2
 from psycopg2 import OperationalError
 
+# =============================
+# SQL: Create Table
+# =============================
 CREATE_TABLE_QUERY = """
 CREATE TABLE IF NOT EXISTS production_data (
     id SERIAL PRIMARY KEY,
-
-    station_name TEXT,
-    model_type INTEGER,
-    batch_number INTEGER,
-    tray_number INTEGER,
-    product_line TEXT,
-    supplier_name TEXT,
-    ok_quantity INTEGER,
-    ng_quantity INTEGER,
-    operator_name TEXT,
+    station_name TEXT NOT NULL,
+    model_type TEXT NOT NULL,
+    batch_number INTEGER NOT NULL,
+    tray_number INTEGER NOT NULL,
+    product_line TEXT NOT NULL,
+    supplier_name TEXT NOT NULL,
+    ok_quantity INTEGER DEFAULT 0,
+    ng_quantity INTEGER DEFAULT 0,
+    operator_name TEXT NOT NULL,
     remarks TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    production_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-
-
 """
 
+# =============================
+# Connection
+# =============================
 def create_connection(db_name, db_user, db_password, db_host, db_port):
-    connection = None
     try:
-        connection = psycopg2.connect(
+        return psycopg2.connect(
             database=db_name,
             user=db_user,
             password=db_password,
             host=db_host,
             port=db_port
         )
-        print("Connection to PostgreSQL DB successful")
     except OperationalError as e:
-        print(f"The error '{e}' occurred")
-    return connection
+        print(f"❌ Database connection error: {e}")
+        return None
 
-def execute_query(connection, query):
+# =============================
+# Execute Generic Query
+# =============================
+def execute_query(connection, query, params=None):
     try:
-        cursor = connection.cursor()
-        cursor.execute(query)
-        connection.commit()
-        cursor.close()
-        print("✅ Query executed successfully")
+        with connection.cursor() as cursor:
+            cursor.execute(query, params)
+            connection.commit()
     except OperationalError as e:
-        print(f"❌ The error '{e}' occurred")
+        print(f"❌ Query error: {e}")
+        connection.rollback()
 
+# =============================
+# Table Management
+# =============================
 def create_production_table(connection):
     execute_query(connection, CREATE_TABLE_QUERY)
 
-def drop_production_table(connection, table_name):
-    drop_query = f"DROP TABLE IF EXISTS {table_name};"
-    execute_query(connection, drop_query)
+def drop_production_table(connection):
+    execute_query(connection, "DROP TABLE IF EXISTS production_data;")
 
-def clear_production_table(connection, table_name):
-    clear_query = f"DELETE FROM {table_name};"
-    execute_query(connection, clear_query)
+def clear_production_table(connection):
+    execute_query(connection, "DELETE FROM production_data;")
 
-def insert_production_record(connection, record):
-    insert_query = f"""
-    INSERT INTO production_data
-    (station_name, model_type, batch_number, tray_number,
-     product_line, supplier_name, ok_quantity, ng_quantity, operator_name, remarks)
-    VALUES
-    ('{record['station_name']}', {record['model_type']}, {record['batch_number']},
-     {record['tray_number']}, '{record['product_line']}', '{record['supplier_name']}',
-     {record['ok_quantity']}, {record['ng_quantity']}, '{record['operator_name']}' ,'{record['remarks']}')
-    ;
+# =============================
+# CRUD OPERATIONS
+# =============================
+def insert_production_record(connection, data):
+    insert_query = """
+    INSERT INTO production_data (
+        station_name,
+        model_type,
+        batch_number,
+        tray_number,
+        product_line,
+        supplier_name,
+        ok_quantity,
+        ng_quantity,
+        operator_name,
+        remarks
+    )
+    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
     """
-    execute_query(connection, insert_query)
+
+    values = (
+        data["Station Name"],
+        data["Model Type"],
+        data["Batch Number"],
+        data["Tray Number"],
+        data["Product Line"],
+        data["Supplier"],
+        data["OK Quantity"],
+        data["NG Quantity"],
+        data["Operator Name"],
+        data["Remarks"]
+    )
+
+    execute_query(connection, insert_query, values)
 
 def update_production_record(connection, record_id, updated_fields):
-    set_clause = ", ".join(
-        [f"{field} = '{value}'" for field, value in updated_fields.items()]
-    )
+    set_clause = ", ".join([f"{k} = %s" for k in updated_fields.keys()])
+    values = list(updated_fields.values()) + [record_id]
+
     update_query = f"""
     UPDATE production_data
     SET {set_clause}
-    WHERE id = {record_id};
+    WHERE id = %s;
     """
-    execute_query(connection, update_query)
+
+    execute_query(connection, update_query, values)
 
 def delete_production_record(connection, record_id):
-    delete_query = f"DELETE FROM production_data WHERE id = {record_id};"
-    execute_query(connection, delete_query)
+    delete_query = "DELETE FROM production_data WHERE id = %s;"
+    execute_query(connection, delete_query, (record_id,))
 
-conn = create_connection("mydb", "postgres", "123", "localhost", "5432")
-create_production_table(conn)
+from dotenv import load_dotenv  
+import os
+# =============================
+# INITIALIZE CONNECTION
 
-# reset the table
-# drop_production_table(conn, "production_data")
+load_dotenv()
+
+conn = create_connection(
+    os.getenv("DB_NAME"),   
+    os.getenv("DB_USER"),   
+    os.getenv("DB_PASSWORD"),
+    os.getenv("DB_HOST"),   
+    os.getenv("DB_PORT")
+)
+# drop_production_table(conn)
 # create_production_table(conn)
-#--------------------------
 
-#execute_query(conn, "INSERT INTO production_data (station_name, model_type, batch_number, tray_number, product_line, supplier_name, ok_quantity, ng_quantity, operator_name) VALUES ('Station A', 101, 5001, 1, 'Line 1', 'Supplier X', 480, 20, 'Operator A');")   
-# clear_production_table(conn, "production_data")
+
 # if conn:
-#     cur = conn.cursor()
-#     cur.execute("SELECT * FROM production_data;")
-#     rows = cur.fetchall()
+#     print("✅ Database connection established.")
+    
+#     data = {
+#         "Station Name": "Test Station",
+#         "Model Type": "TX",
+#         "Batch Number": 123,
+#         "Tray Number": 1,
+#         "Product Line": "Test Line",
+#         "Supplier": "Test Supplier",
+#         "OK Quantity": 100,
+#         "NG Quantity": 5,
+#         "Operator Name": "Operator A",
+#         "Remarks": "Initial test record"
+#     }
 
-#     for row in rows:
-#         print(row)
-
-#     cur.close()
-#     conn.close()
+#     insert_production_record(conn, data)
+#     print("✅ Test record inserted.")
 

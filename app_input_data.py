@@ -1,16 +1,25 @@
+from dotenv import load_dotenv
 import streamlit as st
 import pandas as pd
 import plotly.express as px
 # from streamlit_autorefresh import st_autorefresh
 from datetime import date
+import os
+from database_connect import (
+    create_connection,
+    insert_production_record,
+    create_production_table
+)
 
 from data_info import (
     CUSTOM_ORDER, 
     CUSTOM_ORDER_TIME, 
     DATABASE_COLOUMNS,
     OPERATOR_LIST,
-    SUPPLIER_LIST
+    SUPPLIER_LIST,
+    MODULE_TYPE_LIST
 )
+
 
 
 
@@ -20,6 +29,28 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
+
+load_dotenv()
+
+conn = create_connection(
+    os.getenv("DB_NAME", "mydb"),
+    os.getenv("DB_USER", "postgres"),
+    os.getenv("DB_PASSWORD", "123"),
+    os.getenv("DB_HOST", "localhost"),
+    os.getenv("DB_PORT", "5432")
+)
+
+if conn:
+    create_production_table(conn)
+    record = pd.read_sql(
+        "SELECT * FROM production_data;",
+        conn
+    )
+else:
+    st.error("❌ Database connection failed")
+    record = pd.DataFrame(columns=DATABASE_COLOUMNS)
+
 
 # -----------------------------
 # Header
@@ -38,12 +69,9 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-st.write("")  
+st.write("")
 
-if "record_data" not in st.session_state:
-    st.session_state.record_data = pd.DataFrame(
-        columns=DATABASE_COLOUMNS
-    )
+
 
 # -----------------------------
 st.subheader("Running Model Information")
@@ -62,7 +90,7 @@ with col1:
 with col2:
     model_type = st.selectbox(
         "Model Type",
-        ["TX", "RX"],
+        MODULE_TYPE_LIST,
         index=None,
         placeholder="Select model",
         help="Product model type"
@@ -106,8 +134,8 @@ with col6:
         placeholder="Select supplier",
         help="Supplier of the materials"
     )
-    
 
+#-----------------------------
 st.subheader("Process Station information")
 
 col1, col2, col3, col4 = st.columns([1,1,1,1])
@@ -148,80 +176,52 @@ with col4:
         placeholder="Select operator",
         help="Operator responsible for production"
     )
-
 # -----------------------------
-# Action Section
-# -----------------------------
-st.divider()
 
-col_btn1, col_btn2 = st.columns([1, 6])
 
+col_btn1, col_btn2, col_btn3 = st.columns([1, 2, 3])
 
 
 with col_btn1:
     submit = st.button("💾 Save Record", use_container_width=True)
 
 if submit:
-    if not all([station_name, model_type, product_line]):
-        st.warning("⚠️ Please complete all required fields.")
-    else:
-        new_record = {
-        'Date': date.today().strftime("%Y-%m-%d"),
-        'Station Name': station_name,
-        'Model Type': model_type,
-        'OK Quantity': ok_quantity,
-        'NG Quantity': ng_quantity,
-        'Batch Number': batch_number,
-        'Product Line': product_line
+    new_record = {
+        "Station Name": station_name,
+        "Model Type": model_type,
+        "Batch Number": batch_number,
+        "Tray Number": tray_number,
+        "Product Line": product_line,
+        "Supplier": supplier,
+        "OK Quantity": ok_quantity,
+        "NG Quantity": ng_quantity,
+        "Operator Name": operator_select,
+        "Remarks": defect_type
     }
+    insert_production_record(conn, new_record)
+    record = pd.read_sql(
+        "SELECT * FROM production_data;",
+        conn
+    )
 
-        st.session_state.record_data = pd.concat(
-            [st.session_state.record_data, pd.DataFrame([new_record])],
-            ignore_index=False
-        )
-        st.success("✅ Production data saved successfully!")
+with col_btn2:
+    st.success("✅ Record saved successfully!")
 
 with st.container(height=500):
     st.subheader("📋 Production Records")
     st.dataframe(
-        st.session_state.record_data,
+        record,
         use_container_width=True,
         hide_index=True
     )
 
-
 st.download_button(
     "⬇️ Download CSV",
-    st.session_state.record_data.to_csv(index=False),
+    record.to_csv(index=False),
     "cob_production_records.csv",
     "text/csv"
 )
 
 
-st.divider()
-st.subheader("🗑️ Delete Production Record (under developing)")
 
-col_d1, col_d2, col_d3, col_d4 = st.columns([1, 1.2, 2, 1])
 
-with col_d1:
-    del_batch = st.number_input("Batch Number", min_value=1, step=1)
-
-with col_d2:
-    del_time = st.selectbox("Production Time", CUSTOM_ORDER_TIME)
-
-with col_d3:
-    del_station = st.selectbox("Station Name", CUSTOM_ORDER)
-
-with col_d4:
-    st.markdown("<div style='margin-top:28px;'></div>", unsafe_allow_html=True)
-    delete_btn = st.button("🗑️ Delete", use_container_width=True)
-    
-if delete_btn:
-    mask = ~(
-        (st.session_state.record_data["Batch Number"] == del_batch)
-        & (st.session_state.record_data["Production Time"] == del_time)
-        & (st.session_state.record_data["Station Name"] == del_station)
-    )
-
-    st.session_state.record_data = st.session_state.record_data[mask]
-    st.success("✅ Selected record deleted successfully.")

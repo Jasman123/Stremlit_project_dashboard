@@ -6,6 +6,11 @@ SUB_CATEGORY = {
     "Packing": ["Check Connector", "Packing"]
 }
 
+MODULE_TYPE_LIST = [
+    "TX",
+    "RX"
+]
+
 OPERATOR_LIST = [
     "Operator A",
     "Operator B",
@@ -23,7 +28,8 @@ SUPPLIER_LIST = [
     "Supplier Z"
 ]
 
-DATABASE_COLOUMNS = ['Date', 'Station Name', 'Model Type', 'OK Quantity', 'NG Quantity', 'Batch Number', 'Product Line']
+DATABASE_COLOUMNS = ['Date', 'Station Name', 'Model Type', 'Batch Number',
+                      'Product Line', 'OK Quantity', 'NG Quantity', 'Operator Name', 'Remarks']
 
 CUSTOM_ORDER = [
     "Incoming Check",
