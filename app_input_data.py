@@ -57,20 +57,20 @@ else:
 # Header
 # -----------------------------
 st.markdown("""
-<div style="
-    background-color:#0E4BF1;
-    padding:18px;
-    border-radius:12px;
-    text-align:center;
-    color:white;
-    font-size:28px;
-    font-weight:600;
-">
-    COB Production Data Input
-</div>
-""", unsafe_allow_html=True)
-
-st.write("")
+    <div style="
+        background-color:#0078FF;
+        padding: 16px;
+        border-radius: 10px;
+        text-align: center;
+        color: white;
+        font-size: 30px;
+        font-weight: bold;
+        letter-spacing: 1px;
+    ">
+        Input Station Production Data
+    </div>
+""", unsafe_allow_html=True
+)
 
 
 

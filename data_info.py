@@ -12,20 +12,37 @@ MODULE_TYPE_LIST = [
 ]
 
 OPERATOR_LIST = [
-    "Operator A",
-    "Operator B",
-    "Operator C",
-    "Operator D",
-    "Operator E",
-    "Operator F",
-    "Operator G",
-    "Operator H"
+    "TRI NOVRIYANSYAH",
+    "JASMAN",
+    "SITI DEWI RINAZAH",
+    "YAP LIDIANA",
+    "ROSWANTI HERDIANTI",
+    "RANA SAPUTRA",
+    "SEGIL AMNI TAZDIKI H",
+    "AINI LATIFAH",
+    "SYIFA ALFIA",
+    "NADIA PERMATASARI",
+    "CINDY BERLIANI",
+    "IMAS DINANTI",
+    "SINTA HANDAYANI",
+    "EKA INDRIYANI",
+    "LIDYA ARYANINGSIH",
+    "DIVA FIRNANDA",
+    "PRESY OCTAVIANI",
+    "DENDI SCAR LANGIT",
+    "WIDANENGSIH",
+    "THANIA WIDIANTI",
+    "YULIANTI",
+    "RINI SEPTIYANI"
 ]
 
+
 SUPPLIER_LIST = [
-    "Supplier X",
-    "Supplier Y",
-    "Supplier Z"
+    "Ryuhan",
+    "YungSheng",
+    "KeiKou",
+    "JVC",
+    "Other"
 ]
 
 DATABASE_COLOUMNS = ['Date', 'Station Name', 'Model Type', 'Batch Number',
