@@ -8,7 +8,8 @@ import os
 from database_connect import (
     create_connection,
     insert_production_record,
-    create_production_table
+    create_production_table,
+    delete_production_record
 )
 
 from data_info import (
@@ -214,16 +215,58 @@ with st.container(height=500):
     st.dataframe(
         record,
         use_container_width=True,
-        hide_index=True
+        hide_index=False
     )
 
-st.download_button(
-    "⬇️ Download CSV",
-    record.to_csv(index=False),
-    "cob_production_records.csv",
-    "text/csv"
-)
 
 
+with st.container(height=200, width=2000):
 
+    col_down, col_edit, col_reset = st.columns([1,1,1])
+
+    has_data = len(record) > 0
+
+    
+    with col_down:
+        st.markdown("<div style='margin-top: 30px;'></div>", unsafe_allow_html=True)
+        st.download_button(
+            "⬇️ Download CSV",
+            record.to_csv(index=False),
+            "cob_production_records.csv",
+            "text/csv",
+            use_container_width=True
+            )
+
+
+    with col_edit:
+        option_edit_row = st.selectbox(
+            label="Row to Delete",
+            options=record.index.tolist() if has_data else [],
+            index=len(record) - 1 if has_data else 0,
+            placeholder="Select row to delete",
+            help="Select a row to delete from the records",
+            disabled=not has_data
+        )
+
+    with col_reset:
+        st.markdown("<div style='margin-top: 30px;'></div>", unsafe_allow_html=True)
+
+        delete_button = st.button(
+            "Delete",
+            type="primary",
+            disabled=not has_data,
+            use_container_width=True
+        )
+    if delete_button:
+        try:
+            row_id = record.iloc[option_edit_row]['id']
+            st.write(f"Deleting record ID: {row_id}")
+            delete_production_record(conn, int(row_id))
+            record = pd.read_sql(
+                "SELECT * FROM production_data;",
+                conn
+            )   
+        except Exception as e:
+            st.error(f"❌ Error deleting record: {e}")
+        
 
